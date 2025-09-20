@@ -13,13 +13,12 @@ app.get('/', (_, res) => {
   res.send(`Hello World!`);
 });
 
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat/test', async (_, res) => {
   // Set SSE headers
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': 'http://localhost:5173',
     'Access-Control-Allow-Credentials': 'true',
     'x-vercel-ai-ui-message-stream': 'v1',
   });
