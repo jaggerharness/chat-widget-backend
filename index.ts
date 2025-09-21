@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import { simulateReadableStream } from 'ai';
+import { convertToModelMessages, simulateReadableStream, streamText } from 'ai';
+import { google } from "@ai-sdk/google"
 
 const app = express();
 
@@ -9,12 +10,21 @@ app.use(cors({
   credentials: true
 }));
 
-app.get('/', (_, res) => {
-  res.send(`Hello World!`);
+app.use(express.json());
+
+app.post('/api/chat', async (req, res) => {
+  const messages = req.body.messages;
+
+  const result = streamText({
+    model: google("models/gemini-2.0-flash"),
+    system: 'You are a helpful assistant.',
+    messages: convertToModelMessages(messages),
+  });
+
+  result.pipeUIMessageStreamToResponse(res);
 });
 
 app.post('/api/chat/test', async (_, res) => {
-  // Set SSE headers
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -39,14 +49,13 @@ app.post('/api/chat/test', async (_, res) => {
     ],
   });
 
-  // Pipe the stream to the response
   const reader = stream.getReader();
-  
+
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      
+
       res.write(value);
     }
   } catch (error) {

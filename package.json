@@ -8,9 +8,11 @@
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.ts"
+    "start": "node --env-file=.env index.ts",
+    "dev": "tsx watch --env-file=.env index.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.14",
     "@ai-sdk/openai": "^2.0.32",
     "ai": "^5.0.47",
     "cors": "^2.8.5",
