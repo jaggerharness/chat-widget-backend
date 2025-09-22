@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import { convertToModelMessages, simulateReadableStream, streamText } from 'ai';
+import { convertToModelMessages, generateObject, simulateReadableStream, streamText, UIMessage } from 'ai';
 import { google } from "@ai-sdk/google"
+import { ServerResponse } from 'http';
+import z from 'zod';
 
 const app = express();
 
@@ -12,9 +14,11 @@ app.use(cors({
 
 app.use(express.json());
 
-app.post('/api/chat', async (req, res) => {
-  const messages = req.body.messages;
+function isQuizRequest(messages: UIMessage[]) {
+  return true;
+}
 
+function handleGenerateText(messages: UIMessage[], res: ServerResponse) {
   const result = streamText({
     model: google("models/gemini-2.0-flash"),
     system: 'You are a helpful assistant.',
@@ -22,6 +26,50 @@ app.post('/api/chat', async (req, res) => {
   });
 
   result.pipeUIMessageStreamToResponse(res);
+}
+
+async function handleGenerateQuiz(messages: UIMessage[], res: ServerResponse) {
+  const lastMessage = messages.at(-1);
+  const result = await generateObject({
+    model: google("models/gemini-2.0-flash"),
+    schema: z.object({
+      quiz: z.object({
+        title: z.string().describe("The title of the quiz"),
+        questions: z.array(
+          z.object({
+            question: z.string().describe("The quiz question"),
+            options: z.array(z.string().describe("Multiple choice options - each question should have 4 options")),
+            correctAnswer: z.string().describe("The correct multiple choice answer")
+          })
+        ).describe("Array of quiz questions - the quiz should contain 5 questions")
+      })
+    }),
+    prompt: `
+          Create a quiz based on the user's request: "${lastMessage}"
+
+          The quiz should contain 5 multiple choice questins that are:
+          - Clear and unambiguous
+          - Appropriately challenging
+          - Educational and informative
+          - Include 4 options each with only one correct answer
+        `,
+  });
+
+  console.log(JSON.stringify(result.object, null, 2));
+}
+
+
+
+app.post('/api/chat', async (req, res) => {
+  const messages: UIMessage[] = req.body.messages;
+
+  const isQuiz = isQuizRequest(messages);
+
+  if (!isQuiz) {
+    handleGenerateText(messages, res);
+  }
+
+  await handleGenerateQuiz(messages, res);
 });
 
 app.post('/api/chat/test', async (_, res) => {
@@ -69,3 +117,4 @@ app.post('/api/chat/test', async (_, res) => {
 app.listen(3000, () => {
   console.log(`🚀 Server ready at: http://localhost:3000`);
 });
+
