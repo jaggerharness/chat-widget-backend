@@ -1,9 +1,7 @@
 import express from "express";
 import cors from "cors";
-import { simulateReadableStream } from "ai";
-import {
-  chatMessageRequestSchema,
-} from "./src/utils/schema";
+import { createUIMessageStream, pipeUIMessageStreamToResponse, simulateReadableStream } from "ai";
+import { chatMessageRequestSchema } from "./src/utils/schema";
 import { handleGenerateText } from "./src/services/chatService";
 import { handleGenerateQuiz, isQuizRequest } from "./src/services/quizService";
 import { HTTP_STATUS } from "./src/utils/http";
@@ -28,11 +26,27 @@ app.post("/api/chat", async (req, res) => {
     const requestMessage = validatedRequestBody.data?.message;
     const quizRequest = await isQuizRequest(requestMessage);
 
-    if (quizRequest.quiz) {
-      const generatedQuiz = await handleGenerateQuiz(requestMessage);
-      res.status(HTTP_STATUS.OK).json(generatedQuiz);
-    } else {
+    // Handle both quiz and text generation based on the quizRequest result
+    if (!quizRequest.quiz) {
       handleGenerateText(requestMessage, res);
+    } else {
+      const generatedQuiz = await handleGenerateQuiz(requestMessage);
+
+      pipeUIMessageStreamToResponse({
+        response: res,
+        stream: createUIMessageStream({
+          execute: async ({ writer }) => {
+            writer.write({ type: "start" });
+
+            writer.write({
+              type: "data-quiz",
+              data: {
+                quiz: generatedQuiz.object.quiz,
+              },
+            });
+          },
+        }),
+      });
     }
   }
 });

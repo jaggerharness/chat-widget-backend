@@ -87,5 +87,5 @@ export async function handleGenerateQuiz(messages: Message) {
         `,
   });
 
-  return result.object;
+  return result;
 }
