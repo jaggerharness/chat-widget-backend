@@ -1,24 +1,6 @@
 import z from "zod";
 
-export const messageSchema = z.object({
-  id: z.string(),
-  role: z.enum(["user"]),
-  parts: z.array(
-    z.object({
-      type: z.enum(["text"]),
-      text: z.string().min(1).max(2000),
-    })
-  ),
-});
-
-export const chatMessageRequestSchema = z.object({
-  id: z.string(),
-  message: messageSchema,
-});
-
-export const quizDeterminationSchema = z.object({
-  quiz: z.boolean().describe("Whether the user is requesting a quiz or not"),
-});
+export type Quiz = z.infer<typeof quizSchema>;
 
 export const quizSchema = z.object({
   quiz: z.object({
@@ -40,7 +22,7 @@ export const quizSchema = z.object({
         })
       )
       .describe(
-        "Array of quiz questions - the quiz should contain 5 questions"
+        "Array of quiz questions"
       ),
   }),
 });

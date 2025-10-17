@@ -1,10 +1,13 @@
 import express from "express";
 import cors from "cors";
-import { createUIMessageStream, pipeUIMessageStreamToResponse, simulateReadableStream } from "ai";
-import { chatMessageRequestSchema } from "./src/utils/schema";
-import { handleGenerateText } from "./src/services/chatService";
-import { handleGenerateQuiz, isQuizRequest } from "./src/services/quizService";
-import { HTTP_STATUS } from "./src/utils/http";
+import {
+  convertToModelMessages,
+  simulateReadableStream,
+  streamText,
+  UIMessage,
+} from "ai";
+import { google } from "@ai-sdk/google";
+import { generateQuiz } from "./src/ai/tools";
 
 const app = express();
 
@@ -18,37 +21,19 @@ app.use(
 app.use(express.json());
 
 app.post("/api/chat", async (req, res) => {
-  const validatedRequestBody = chatMessageRequestSchema.safeParse(req.body);
+  const { messages }: { messages: UIMessage[] } = req.body;
 
-  if (!validatedRequestBody.success) {
-    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Invalid request body" });
-  } else {
-    const requestMessage = validatedRequestBody.data?.message;
-    const quizRequest = await isQuizRequest(requestMessage);
+  const result = streamText({
+    model: google("models/gemini-2.0-flash"),
+    system:
+      "You are a helpful assistant which is able to respond to general user queries as well as generate quizzes over particular topics.",
+    messages: convertToModelMessages(messages),
+    tools: {
+      generateQuiz,
+    },
+  });
 
-    // Handle both quiz and text generation based on the quizRequest result
-    if (!quizRequest.quiz) {
-      handleGenerateText(requestMessage, res);
-    } else {
-      const generatedQuiz = await handleGenerateQuiz(requestMessage);
-
-      pipeUIMessageStreamToResponse({
-        response: res,
-        stream: createUIMessageStream({
-          execute: async ({ writer }) => {
-            writer.write({ type: "start" });
-
-            writer.write({
-              type: "data-quiz",
-              data: {
-                quiz: generatedQuiz.object.quiz,
-              },
-            });
-          },
-        }),
-      });
-    }
-  }
+  result.pipeUIMessageStreamToResponse(res);
 });
 
 app.post("/api/chat/test", async (_, res) => {
