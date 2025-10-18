@@ -26,7 +26,7 @@ app.post("/api/chat", async (req, res) => {
   const result = streamText({
     model: google("models/gemini-2.0-flash"),
     system:
-      "You are a helpful assistant which is able to respond to general user queries as well as generate quizzes over particular topics.",
+      `You are a helpful assistant which is able to respond to general user queries as well as generate quizzes over particular topics.`,
     messages: convertToModelMessages(messages),
     tools: {
       generateQuiz,
