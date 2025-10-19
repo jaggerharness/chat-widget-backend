@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import multer from "multer";
 import {
   convertToModelMessages,
   simulateReadableStream,
@@ -8,8 +9,20 @@ import {
 } from "ai";
 import { google } from "@ai-sdk/google";
 import { generateQuiz } from "./src/ai/tools";
+import {
+  extractText,
+  generateChunksFromText,
+  generateEmbeddings,
+} from "./src/services/fileService";
 
 const app = express();
+
+const upload = multer({
+  storage: multer.memoryStorage(), // Store files in memory
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+});
 
 app.use(
   cors({
@@ -25,8 +38,15 @@ app.post("/api/chat", async (req, res) => {
 
   const result = streamText({
     model: google("models/gemini-2.0-flash"),
-    system:
-      `You are a helpful assistant which is able to respond to general user queries as well as generate quizzes over particular topics.`,
+    system: `You are a helpful chatbot assistant with quiz generation capabilities. 
+    
+        You have the following features:
+        - You can engage in conversations and answer questions
+        - You can generate quizzes on various topics
+        - You can accept file uploads (documents, PDFs, etc.) and generate quizzes based on the uploaded material using RAG (Retrieval Augmented Generation)
+
+        When users ask about uploading files, inform them that they can upload files, and you'll use the content to create relevant quizzes tailored to their material. 
+        Let them know to use the button below that has the paperclip on it to upload their files.`,
     messages: convertToModelMessages(messages),
     tools: {
       generateQuiz,
@@ -34,6 +54,23 @@ app.post("/api/chat", async (req, res) => {
   });
 
   result.pipeUIMessageStreamToResponse(res);
+});
+
+app.post("/api/files/upload", upload.array("files"), async (req, res) => {
+  const files = req.files as Express.Multer.File[];
+
+  if (!files || files.length === 0) {
+    return res.status(400).json({ error: "No files uploaded" });
+  }
+
+  files.forEach(async (file) => {
+    const text = await extractText(file);
+    const chunks = await generateChunksFromText(text);
+    const embeddings = await generateEmbeddings(chunks);
+    console.log({ embeddings });
+  });
+
+  return res.status(200).json({ files });
 });
 
 app.post("/api/chat/test", async (_, res) => {

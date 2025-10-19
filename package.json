@@ -12,19 +12,24 @@
     "dev": "tsx watch --env-file=.env index.ts"
   },
   "dependencies": {
-    "@ai-sdk/google": "^2.0.14",
-    "@ai-sdk/openai": "^2.0.32",
-    "ai": "^5.0.47",
+    "@ai-sdk/google": "^2.0.23",
+    "@ai-sdk/openai": "^2.0.52",
+    "@langchain/textsplitters": "^1.0.0",
+    "ai": "^5.0.76",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.2",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "zod": "^4.1.9"
+    "langchain": "^1.0.1",
+    "multer": "^2.0.2",
+    "pdf-parse": "^2.4.3",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/node": "^24.5.2",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.8.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }
