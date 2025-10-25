@@ -15,6 +15,7 @@ import {
   generateEmbeddings,
 } from "./src/services/fileService";
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { embeddingsTable } from "./src/db/schema";
 
 const app = express();
 
@@ -70,6 +71,8 @@ app.post("/api/files/upload", upload.array("files"), async (req, res) => {
     const text = await extractText(file);
     const chunks = await generateChunksFromText(text);
     const embeddings = await generateEmbeddings(chunks);
+    const insertResponse = await db.insert(embeddingsTable).values(embeddings);
+    console.log({ insertResponse });
   });
 
   return res.status(200).json({ files });
