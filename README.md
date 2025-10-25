@@ -5,19 +5,20 @@ This is a simple Express/Node.js web server designed to interface with a React c
 ## Getting Started
 
 1. **Install dependencies:**
-    ```bash
-    npm install
-    ```
+
+   ```bash
+   npm install
+   ```
 
 2. **Start the server:**
-    ```bash
-    npm start
-    ```
+
+   ```bash
+   npm start
+   ```
 
 3. The server will run on `http://localhost:3000` by default.
-4. Make sure you have Docker installed. You'll need to install both postgres and pgvector.
+4. Make sure you have Docker installed. You'll need to install pgvector.
    ```
-   docker pull postgres:18-trixie
    docker pull pgvector/pgvector:pg18-trixie
    ```
 5. Start Postgres instance
@@ -26,7 +27,7 @@ This is a simple Express/Node.js web server designed to interface with a React c
      -e POSTGRES_PASSWORD=password \
      -e POSTGRES_DB=zenith_chat \
      -p 5432:5432 \
-     -d postgres:18-trixie
+     -d pgvector/pgvector:pg18-trixie
    ```
 6. Connect to the database:
    ```bash
@@ -36,6 +37,26 @@ This is a simple Express/Node.js web server designed to interface with a React c
    ```
    postgresql://postgres:password@localhost:5432/zenith_chat
    ```
+
+## Helpful Commands
+
+Apply changes to database with Drizzle
+
+```
+npx drizzle-kit push
+```
+
+Generate migrations:
+
+```
+npx drizzle-kit generate
+```
+
+Apply migrations:
+
+```
+npx drizzle-kit migrate
+```
 
 ## Usage
 
