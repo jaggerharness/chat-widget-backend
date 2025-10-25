@@ -1,5 +1,4 @@
 import { PDFParse } from "pdf-parse";
-import { readFile } from "node:fs/promises";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { google } from "@ai-sdk/google";
 import { embedMany } from "ai";
@@ -26,7 +25,7 @@ export const generateEmbeddings = async (chunks: string[]) => {
 
   const { embeddings } = await embedMany({
     model,
-    values: [...chunks],
+    values: chunks,
   });
 
   return embeddings;

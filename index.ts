@@ -14,6 +14,7 @@ import {
   generateChunksFromText,
   generateEmbeddings,
 } from "./src/services/fileService";
+import { drizzle } from 'drizzle-orm/node-postgres';
 
 const app = express();
 
@@ -32,6 +33,8 @@ app.use(
 );
 
 app.use(express.json());
+
+const db = drizzle(process.env.DATABASE_URL!);
 
 app.post("/api/chat", async (req, res) => {
   const { messages }: { messages: UIMessage[] } = req.body;
@@ -67,7 +70,6 @@ app.post("/api/files/upload", upload.array("files"), async (req, res) => {
     const text = await extractText(file);
     const chunks = await generateChunksFromText(text);
     const embeddings = await generateEmbeddings(chunks);
-    console.log({ embeddings });
   });
 
   return res.status(200).json({ files });
