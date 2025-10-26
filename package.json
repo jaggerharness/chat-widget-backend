@@ -1,6 +1,6 @@
 {
   "name": "zenith-chat-backend",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "",
   "license": "ISC",
   "author": "Jagger Harness",
@@ -12,19 +12,27 @@
     "dev": "tsx watch --env-file=.env index.ts"
   },
   "dependencies": {
-    "@ai-sdk/google": "^2.0.14",
-    "@ai-sdk/openai": "^2.0.32",
-    "ai": "^5.0.47",
+    "@ai-sdk/google": "^2.0.23",
+    "@ai-sdk/openai": "^2.0.53",
+    "@langchain/textsplitters": "^1.0.0",
+    "ai": "^5.0.78",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.2",
+    "drizzle-orm": "^0.44.7",
     "express": "^5.1.0",
-    "zod": "^4.1.9"
+    "langchain": "^1.0.1",
+    "multer": "^2.0.2",
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.16.3",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.5.2",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "@types/express": "^5.0.4",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.9.1",
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.5",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }

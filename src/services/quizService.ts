@@ -1,16 +1,12 @@
 import { generateObject, GenerateObjectResult } from "ai";
 import { google } from "@ai-sdk/google";
-import { Quiz, quizSchema } from "../utils/schema";
+import { Quiz, quizSchema, QuizInput } from "../utils/schema";
 
 export async function handleGenerateQuiz({
   topic,
   difficulty,
   numberOfQuestions,
-}: {
-  topic: string;
-  difficulty?: "easy" | "medium" | "hard";
-  numberOfQuestions?: number;
-}): Promise<GenerateObjectResult<Quiz>> {
+}: QuizInput): Promise<GenerateObjectResult<Quiz>> {
   const result = await generateObject({
     model: google("models/gemini-2.0-flash"),
     schema: quizSchema,

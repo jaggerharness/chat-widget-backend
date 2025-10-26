@@ -1,6 +1,7 @@
 import z from "zod";
 
 export type Quiz = z.infer<typeof quizSchema>;
+export type QuizInput = z.infer<typeof quizInputSchema>;
 
 export const quizSchema = z.object({
   quiz: z.object({
@@ -21,8 +22,23 @@ export const quizSchema = z.object({
             .describe("The correct multiple choice answer"),
         })
       )
-      .describe(
-        "Array of quiz questions"
-      ),
+      .describe("Array of quiz questions"),
   }),
+});
+
+export const quizInputSchema = z.object({
+  topic: z.string().describe('The topic of the quiz, e.g., "math", "history".'),
+  difficulty: z
+    .enum(["easy", "medium", "hard"])
+    .optional()
+    .describe("The difficulty level of the quiz."),
+  numberOfQuestions: z
+    .number()
+    .min(1)
+    .optional()
+    .describe("The number of questions in the quiz."),
+});
+
+export const getInformationSchema = z.object({
+  question: z.string().describe("the users question"),
 });

@@ -1,15 +1,32 @@
 import express from "express";
 import cors from "cors";
+import multer from "multer";
 import {
   convertToModelMessages,
+  hasToolCall,
   simulateReadableStream,
+  stepCountIs,
   streamText,
   UIMessage,
 } from "ai";
 import { google } from "@ai-sdk/google";
-import { generateQuiz } from "./src/ai/tools";
+import { generateQuiz, checkKnowledgeBase } from "./src/ai/tools";
+import {
+  extractText,
+  generateChunksFromText,
+  generateEmbeddings,
+} from "./src/services/ragService";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { embeddingsTable } from "./src/db/schema";
 
 const app = express();
+
+const upload = multer({
+  storage: multer.memoryStorage(), // Store files in memory
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+});
 
 app.use(
   cors({
@@ -20,20 +37,59 @@ app.use(
 
 app.use(express.json());
 
+export const db = drizzle(process.env.DATABASE_URL!);
+
 app.post("/api/chat", async (req, res) => {
   const { messages }: { messages: UIMessage[] } = req.body;
 
   const result = streamText({
     model: google("models/gemini-2.0-flash"),
-    system:
-      "You are a helpful assistant which is able to respond to general user queries as well as generate quizzes over particular topics.",
+    system: `You are a helpful AI assistant with quiz generation capabilities.
+
+      **Your abilities:**
+      - Answer questions and engage in conversations
+      - Generate interactive quizzes on any topic
+      - Use uploaded documents to create tailored quizzes / responses via RAG (Retrieval Augmented Generation)
+
+      **IMPORTANT: Always follow this workflow:**
+      1. FIRST: Check your knowledge base using the checkKnowledgeBase tool for any relevant information
+      2. THEN: Use the retrieved information to inform your response or quiz generation
+      3. If no relevant information is found, use your general knowledge but mention this to the user
+      4. If a quiz is generated, please do not provide the questions below. The user will take the quiz using the "Start Quiz" button.
+
+      **Guidelines:**
+      - NEVER generate a quiz without first checking the knowledge base
+      - When users mention file uploads, let them know they can upload documents (PDFs, text files, etc.) using the paperclip button below
+      - Explain that uploaded files will be used to create personalized quizzes based on their content
+
+      **Tone:** Friendly, helpful, and encouraging. Focus on being useful and educational.`,
     messages: convertToModelMessages(messages),
+    stopWhen: [hasToolCall("generateQuiz"), stepCountIs(5)],
     tools: {
+      checkKnowledgeBase,
       generateQuiz,
     },
   });
 
   result.pipeUIMessageStreamToResponse(res);
+});
+
+app.post("/api/files/upload", upload.array("files"), async (req, res) => {
+  const files = req.files as Express.Multer.File[];
+
+  if (!files || files.length === 0) {
+    return res.status(400).json({ error: "No files uploaded" });
+  }
+
+  files.forEach(async (file) => {
+    const text = await extractText(file);
+    const chunks = await generateChunksFromText(text);
+    const embeddings = await generateEmbeddings(chunks);
+    const insertResponse = await db.insert(embeddingsTable).values(embeddings);
+    console.log({ insertResponse });
+  });
+
+  return res.status(200).json({ files });
 });
 
 app.post("/api/chat/test", async (_, res) => {
