@@ -4,17 +4,18 @@ import multer from "multer";
 import {
   convertToModelMessages,
   simulateReadableStream,
+  stepCountIs,
   streamText,
   UIMessage,
 } from "ai";
 import { google } from "@ai-sdk/google";
-import { generateQuiz } from "./src/ai/tools";
+import { generateQuiz, checkKnowledgeBase } from "./src/ai/tools";
 import {
   extractText,
   generateChunksFromText,
   generateEmbeddings,
-} from "./src/services/fileService";
-import { drizzle } from 'drizzle-orm/node-postgres';
+} from "./src/services/ragService";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { embeddingsTable } from "./src/db/schema";
 
 const app = express();
@@ -35,24 +36,36 @@ app.use(
 
 app.use(express.json());
 
-const db = drizzle(process.env.DATABASE_URL!);
+export const db = drizzle(process.env.DATABASE_URL!);
 
 app.post("/api/chat", async (req, res) => {
   const { messages }: { messages: UIMessage[] } = req.body;
 
   const result = streamText({
     model: google("models/gemini-2.0-flash"),
-    system: `You are a helpful chatbot assistant with quiz generation capabilities. 
-    
-        You have the following features:
-        - You can engage in conversations and answer questions
-        - You can generate quizzes on various topics
-        - You can accept file uploads (documents, PDFs, etc.) and generate quizzes based on the uploaded material using RAG (Retrieval Augmented Generation)
+    system: `You are a helpful AI assistant with quiz generation capabilities.
 
-        When users ask about uploading files, inform them that they can upload files, and you'll use the content to create relevant quizzes tailored to their material. 
-        Let them know to use the button below that has the paperclip on it to upload their files.`,
+      **Your abilities:**
+      - Answer questions and engage in conversations
+      - Generate interactive quizzes on any topic
+      - Use uploaded documents to create tailored quizzes / responses via RAG (Retrieval Augmented Generation)
+
+      **IMPORTANT: Always follow this workflow:**
+      1. FIRST: Check your knowledge base using the checkKnowledgeBase tool for any relevant information
+      2. THEN: Use the retrieved information to inform your response or quiz generation
+      3. If no relevant information is found, use your general knowledge but mention this to the user
+      4. If a quiz is generated, please do not provide the questions below. The user will take the quiz using the "Start Quiz" button
+
+      **Guidelines:**
+      - NEVER generate a quiz without first checking the knowledge base
+      - When users mention file uploads, let them know they can upload documents (PDFs, text files, etc.) using the paperclip button below
+      - Explain that uploaded files will be used to create personalized quizzes based on their content
+
+      **Tone:** Friendly, helpful, and encouraging. Focus on being useful and educational.`,
     messages: convertToModelMessages(messages),
+    stopWhen: stepCountIs(5),
     tools: {
+      checkKnowledgeBase,
       generateQuiz,
     },
   });

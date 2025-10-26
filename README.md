@@ -58,6 +58,12 @@ Apply migrations:
 npx drizzle-kit migrate
 ```
 
+Studio:
+
+```
+npx drizzle-kit studio
+```
+
 ## Usage
 
 Connect your React chat widget to the backend API endpoints to enable chat functionality.

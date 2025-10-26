@@ -36,5 +36,9 @@ export const quizInputSchema = z.object({
     .number()
     .min(1)
     .optional()
-    .describe("The number of questions in the quiz.")
+    .describe("The number of questions in the quiz."),
+});
+
+export const getInformationSchema = z.object({
+  question: z.string().describe("the users question"),
 });

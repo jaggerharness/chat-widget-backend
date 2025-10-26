@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { handleGenerateQuiz } from "../services/quizService";
-import { QuizInput, quizInputSchema } from "../utils/schema";
+import { QuizInput, quizInputSchema, getInformationSchema } from "../utils/schema";
+import { findRelevantContent } from "../services/ragService";
 
 export const generateQuiz = tool({
   description: `Generate a multiple choice quiz when requested. Extract: topic, difficulty level (if mentioned), and number of questions (if specified). 
@@ -15,6 +16,8 @@ export const generateQuiz = tool({
   },
 });
 
-export const tools = {
-  generateQuiz,
-};
+export const checkKnowledgeBase = tool({
+  description: `Get information from your knowledge base to answer questions.`,
+  inputSchema: getInformationSchema,
+  execute: async ({ question }) => findRelevantContent(question),
+});
