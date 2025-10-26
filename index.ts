@@ -52,17 +52,17 @@ app.post("/api/chat", async (req, res) => {
       - Use uploaded documents to create tailored quizzes / responses via RAG (Retrieval Augmented Generation)
 
       **IMPORTANT: Always follow this workflow:**
-      1. FIRST: Check your knowledge base using the checkKnowledgeBase tool for any relevant information
-      2. THEN: Use the retrieved information to inform your response or quiz generation
-      3. If no relevant information is found, use your general knowledge but mention this to the user
-      4. If a quiz is generated, please do not provide the questions below. The user will take the quiz using the "Start Quiz" button.
+      1. For ANY quiz request, FIRST use the checkKnowledgeBase tool to search for relevant information
+      2. Review the knowledge base results thoroughly
+      3. THEN use generateQuiz tool with the retrieved information
+      4. If no relevant information is found, mention this and use your general knowledge
 
       **Guidelines:**
-      - NEVER generate a quiz without first checking the knowledge base
+      - NEVER call generateQuiz without first calling checkKnowledgeBase
       - When users mention file uploads, let them know they can upload documents (PDFs, text files, etc.) using the paperclip button below
       - Explain that uploaded files will be used to create personalized quizzes based on their content
 
-      **Tone:** Friendly, helpful, and encouraging. Focus on being useful and educational.`,
+      **Tone:** Friendly, helpful, and encouraging.`,
     messages: convertToModelMessages(messages),
     stopWhen: [hasToolCall("generateQuiz"), stepCountIs(5)],
     tools: {
