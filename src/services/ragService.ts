@@ -19,8 +19,8 @@ export const extractText = async (file: Express.Multer.File) => {
 
 export const generateChunksFromText = async (text: string) => {
   const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 512,
-    chunkOverlap: 50,
+    chunkSize: 1000,
+    chunkOverlap: 200,
   });
   return await splitter.splitText(text);
 };
@@ -58,9 +58,9 @@ export const findRelevantContent = async (userQuery: string) => {
   const similarGuides = await db
     .select({ name: embeddingsTable.content, similarity })
     .from(embeddingsTable)
-    .where(gt(similarity, 0.65))
+    .where(gt(similarity, 0.5))
     .orderBy(t => desc(t.similarity))
-    .limit(4);
+    .limit(20);
   console.log({ similarGuides });
   return similarGuides;
 };

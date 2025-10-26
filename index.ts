@@ -3,6 +3,7 @@ import cors from "cors";
 import multer from "multer";
 import {
   convertToModelMessages,
+  hasToolCall,
   simulateReadableStream,
   stepCountIs,
   streamText,
@@ -54,7 +55,7 @@ app.post("/api/chat", async (req, res) => {
       1. FIRST: Check your knowledge base using the checkKnowledgeBase tool for any relevant information
       2. THEN: Use the retrieved information to inform your response or quiz generation
       3. If no relevant information is found, use your general knowledge but mention this to the user
-      4. If a quiz is generated, please do not provide the questions below. The user will take the quiz using the "Start Quiz" button
+      4. If a quiz is generated, please do not provide the questions below. The user will take the quiz using the "Start Quiz" button.
 
       **Guidelines:**
       - NEVER generate a quiz without first checking the knowledge base
@@ -63,7 +64,7 @@ app.post("/api/chat", async (req, res) => {
 
       **Tone:** Friendly, helpful, and encouraging. Focus on being useful and educational.`,
     messages: convertToModelMessages(messages),
-    stopWhen: stepCountIs(5),
+    stopWhen: [hasToolCall("generateQuiz"), stepCountIs(5)],
     tools: {
       checkKnowledgeBase,
       generateQuiz,
